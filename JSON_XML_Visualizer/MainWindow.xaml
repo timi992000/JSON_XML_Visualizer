@@ -1,0 +1,57 @@
+﻿<mah:MetroWindow  x:Class="JSON_XML_Visualizer.MainWindow"
+                  xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
+                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                  xmlns:local="clr-namespace:JSON_XML_Visualizer"
+                  mc:Ignorable="d"
+                  Title="MainWindow"
+                  Height="450"
+                  Width="800">
+  <Grid Margin="10">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!--Header and Button-->
+    <Grid Grid.Row="0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <Button Content="Select File"
+              Command="{Binding [SelectFile]}"
+              Width="100" 
+              Grid.Column="0"/>
+
+      <TextBlock Text="{Binding SelectedFileText}"
+                 Grid.Column="1"
+                 Margin="10 0 0 0"
+                 VerticalAlignment="Center"/>
+
+    </Grid>
+
+    <!--Treeview-->
+    <Grid Grid.Row="1">
+
+      <TreeView x:Name="treeView"
+                ItemsSource="{Binding DeserializesJSONItems, Mode=TwoWay}"
+                VirtualizingStackPanel.IsVirtualizing="True"
+                VirtualizingStackPanel.VirtualizationMode="Standard">
+        <TreeView.ItemsPanel>
+          <ItemsPanelTemplate>
+            <VirtualizingStackPanel />
+          </ItemsPanelTemplate>
+        </TreeView.ItemsPanel>
+        <TreeView.ItemTemplate>
+          <HierarchicalDataTemplate ItemsSource="{Binding Children, Mode=TwoWay}">
+            <TextBlock Text="{Binding NameValueString}" />
+          </HierarchicalDataTemplate>
+        </TreeView.ItemTemplate>
+      </TreeView>
+    </Grid>
+
+  </Grid>
+</mah:MetroWindow>
