@@ -10,6 +10,7 @@
                   Title="JSON / XML Visualizer"
                   Height="450"
                   Width="800">
+
   <Grid Margin="10">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
@@ -70,25 +71,46 @@
         <TreeView.ItemTemplate>
           <HierarchicalDataTemplate ItemsSource="{Binding Children, Mode=TwoWay}">
 
-            <StackPanel Orientation="Horizontal">
-              <Button DataContext="{Binding DataContext, ElementName=treeView}"
-                      Margin="2"
-                      Visibility="{Binding EditModeVisibility}"
-                      Command="{Binding [EditNode]}">
-                <Button.Content>
-                  <iconPacks:PackIconMaterial Kind="Pencil"
-                                              Width="10"
-                                              Height="10" />
-                </Button.Content>
-              </Button>
-              <TextBlock Text="{Binding NameValueString}"
-                         Margin="5 0 0 0"
-                         VerticalAlignment="Center" />
-            </StackPanel>
+            <ContentControl>
 
-            <!--<HierarchicalDataTemplate.Triggers>
-              
-            </HierarchicalDataTemplate.Triggers>-->
+              <StackPanel Orientation="Horizontal">
+                <Button DataContext="{Binding DataContext, ElementName=treeView}"
+                        Margin="2"
+                        Visibility="{Binding EditModeVisibility}"
+                        Command="{Binding [EditNode]}">
+                  <Button.Content>
+                    <iconPacks:PackIconMaterial Kind="Pencil"
+                                                Width="10"
+                                                Height="10" />
+                  </Button.Content>
+                </Button>
+                <TextBlock Text="{Binding NameValueString}"
+                           Margin="5 0 0 0"
+                           VerticalAlignment="Center" />
+              </StackPanel>
+
+              <ContentControl.Style>
+                <Style TargetType="ContentControl">
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding Path=IsInEdit}"
+                                 Value="True">
+                      <Setter Property="ContentTemplate">
+                        <Setter.Value>
+                          <DataTemplate>
+                            <TextBox DataContext="{Binding DataContext.SelectedNode, ElementName=treeView}"
+                                     Text="{Binding Value, Mode=TwoWay}"
+                                     Margin="5 0 0 0"
+                                     MinWidth="100" />
+                          </DataTemplate>
+                        </Setter.Value>
+                      </Setter>
+                    </DataTrigger>
+
+                  </Style.Triggers>
+                </Style>
+              </ContentControl.Style>
+
+            </ContentControl>
 
           </HierarchicalDataTemplate>
         </TreeView.ItemTemplate>

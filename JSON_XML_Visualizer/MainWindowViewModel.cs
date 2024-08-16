@@ -17,10 +17,15 @@ namespace JSON_XML_Visualizer
             set => Set(value);
         }
 
-        public XTreeNode SelectedNode 
-        { 
+        public XTreeNode SelectedNode
+        {
             get => Get<XTreeNode>();
-            set => Set(value); 
+            set
+            {
+                if (SelectedNode != null && SelectedNode.IsInEdit)
+                    SelectedNode.IsInEdit = false;
+                Set(value);
+            }
         }
 
         [DependsUpon(nameof(FileName))]
@@ -101,12 +106,12 @@ namespace JSON_XML_Visualizer
 
         public void Execute_SaveFile()
         {
-
+            __SaveTreeNode();
         }
 
         public void Execute_EditNode()
-        { 
-            if(SelectedNode != null)
+        {
+            if (SelectedNode != null)
                 SelectedNode.IsInEdit = true;
         }
 
@@ -209,7 +214,7 @@ namespace JSON_XML_Visualizer
             string jsonString = JsonSerializer.Serialize(jsonElements, options);
             var copyFileName = Path.Combine(Path.GetDirectoryName(FileName), Path.GetFileNameWithoutExtension(FileName) + "_Changed" + Path.GetExtension(FileName));
 
-            File.WriteAllText(FileName, jsonString);
+            File.WriteAllText(copyFileName, jsonString);
         }
 
         private string ConvertTreeNodesToJson(XTreeNode node)

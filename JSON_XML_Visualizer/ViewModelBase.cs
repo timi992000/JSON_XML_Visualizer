@@ -10,6 +10,9 @@ namespace JSON_XML_Visualizer
 {
     public class ViewModelBase : INotifyPropertyChanged, IDisposable
     {
+
+        public string XName => "Test";
+
         #region - needs -
         private const string m_EXECUTE_PREFIX = "Execute_";
         private const string m_CANEXECUTE_PREFIX = "CanExecute_";
