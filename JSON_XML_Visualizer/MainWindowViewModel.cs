@@ -3,6 +3,7 @@ using Microsoft.Win32;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
+using System.Windows;
 using System.Xml.Linq;
 
 namespace JSON_XML_Visualizer
@@ -10,9 +11,24 @@ namespace JSON_XML_Visualizer
     internal class MainWindowViewModel : ViewModelBase
     {
 
-        public ObservableCollection<XTreeNode> DeserializesJSONItems
+        public ObservableCollection<XTreeNode> TreeNodes
         {
             get => Get<ObservableCollection<XTreeNode>>();
+            set => Set(value);
+        }
+
+        public XTreeNode SelectedNode 
+        { 
+            get => Get<XTreeNode>();
+            set => Set(value); 
+        }
+
+        [DependsUpon(nameof(FileName))]
+        public bool HasFile => FileName.IsNotNullOrEmpty();
+
+        public string FileName
+        {
+            get => Get<string>();
             set => Set(value);
         }
 
@@ -22,11 +38,22 @@ namespace JSON_XML_Visualizer
             set => Set(value);
         }
 
-        [DependsUpon(nameof(DeserializesJSONItems))]
-        public bool CanExecute_RemoveFile() => DeserializesJSONItems != null;
+        public bool EditMode
+        {
+            get => Get<bool>();
+            set => Set(value);
+        }
+
+        [DependsUpon(nameof(EditMode))]
+        public Visibility EditModeVisibility => EditMode ? Visibility.Visible : Visibility.Collapsed;
+
+        [DependsUpon(nameof(TreeNodes))]
+        public bool CanExecute_RemoveFile() => TreeNodes != null;
         public void Execute_RemoveFile()
         {
-            DeserializesJSONItems = null;
+            EditMode = false;
+            TreeNodes = null;
+            FileName = "";
             SelectedFileText = "";
         }
 
@@ -36,39 +63,51 @@ namespace JSON_XML_Visualizer
             dlg.Filter = "JSON/XML Files|*.json;*.xml;";
 
             SelectedFileText = string.Empty;
+            FileName = string.Empty;
 
             dlg.ShowDialog();
 
-
             if (dlg.FileName.IsNotNullOrEmpty())
             {
-
+                FileName = dlg.FileName;
                 try
                 {
-                    var allLines = File.ReadAllLines(dlg.FileName);
+                    var allLines = File.ReadAllLines(FileName);
                     int lineCount = allLines.Length;
                     string contentString = string.Concat(allLines);
 
-
                     var rootNodes = new ObservableCollection<XTreeNode>();
 
-                    if (dlg.FileName.EndsWith("json", StringComparison.OrdinalIgnoreCase))
+                    if (FileName.EndsWith("json", StringComparison.OrdinalIgnoreCase))
                         __ParseJson(contentString, rootNodes);
-                    else if (dlg.FileName.EndsWith("xml", StringComparison.OrdinalIgnoreCase))
+                    else if (FileName.EndsWith("xml", StringComparison.OrdinalIgnoreCase))
                     {
-                        __ParseXml(dlg.FileName, rootNodes);
+                        __ParseXml(rootNodes);
                     }
                     else
                         return;
 
-                    DeserializesJSONItems = rootNodes;
-                    SelectedFileText = $"{dlg.FileName} ({lineCount:N0} Lines)";
+                    TreeNodes = rootNodes;
+                    SelectedFileText = $"{FileName} ({lineCount:N0} Lines)";
                 }
                 catch (Exception)
                 {
                 }
-
             }
+        }
+
+        [DependsUpon(nameof(EditMode))]
+        public bool CanExecute_SaveFile() => EditMode;
+
+        public void Execute_SaveFile()
+        {
+
+        }
+
+        public void Execute_EditNode()
+        { 
+            if(SelectedNode != null)
+                SelectedNode.IsInEdit = true;
         }
 
         private void __ParseJson(string contentString, ObservableCollection<XTreeNode> rootNodes)
@@ -120,9 +159,9 @@ namespace JSON_XML_Visualizer
             return node;
         }
 
-        private void __ParseXml(string fileName, ObservableCollection<XTreeNode> rootNodes)
+        private void __ParseXml(ObservableCollection<XTreeNode> rootNodes)
         {
-            var doc = XDocument.Load(fileName);
+            var doc = XDocument.Load(FileName);
             rootNodes.Add(ProcessXmlElement(doc.Root));
         }
 
@@ -140,6 +179,71 @@ namespace JSON_XML_Visualizer
             }
 
             return node;
+        }
+
+        private void __SaveTreeNode()
+        {
+            if (FileName.IsNullOrEmpty() || TreeNodes.IsEmpty())
+                return;
+
+            if (FileName.EndsWith("json", StringComparison.OrdinalIgnoreCase))
+            {
+                __ConvertAndWriteJSON();
+            }
+            else if (FileName.EndsWith("xml", StringComparison.OrdinalIgnoreCase))
+            {
+
+            }
+        }
+
+        private void __ConvertAndWriteJSON()
+        {
+            var jsonElements = new Dictionary<string, JsonElement>();
+
+            foreach (var rootNode in TreeNodes)
+            {
+                jsonElements[rootNode.Name] = ConvertTreeNodeToJsonElement(rootNode);
+            }
+
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            string jsonString = JsonSerializer.Serialize(jsonElements, options);
+            var copyFileName = Path.Combine(Path.GetDirectoryName(FileName), Path.GetFileNameWithoutExtension(FileName) + "_Changed" + Path.GetExtension(FileName));
+
+            File.WriteAllText(FileName, jsonString);
+        }
+
+        private string ConvertTreeNodesToJson(XTreeNode node)
+        {
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            var jsonElement = ConvertTreeNodeToJsonElement(node);
+            return JsonSerializer.Serialize(jsonElement, options);
+        }
+
+        private JsonElement ConvertTreeNodeToJsonElement(XTreeNode node)
+        {
+            using (var doc = JsonDocument.Parse("{}"))
+            {
+                var jsonObject = new Dictionary<string, JsonElement>();
+
+                if (node.Children.Count > 0)
+                {
+                    var childrenObject = new Dictionary<string, JsonElement>();
+                    foreach (var child in node.Children)
+                    {
+                        childrenObject[child.Name] = ConvertTreeNodeToJsonElement(child);
+                    }
+
+                    var jsonObjectNode = JsonSerializer.SerializeToElement(childrenObject);
+                    jsonObject[node.Name] = jsonObjectNode;
+                }
+                else
+                {
+                    jsonObject[node.Name] = JsonDocument.Parse($"\"{node.Value}\"").RootElement;
+                }
+
+                var jsonNode = JsonSerializer.SerializeToElement(jsonObject);
+                return jsonNode;
+            }
         }
 
     }

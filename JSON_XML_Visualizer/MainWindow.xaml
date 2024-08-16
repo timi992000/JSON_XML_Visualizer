@@ -5,6 +5,7 @@
                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                   xmlns:local="clr-namespace:JSON_XML_Visualizer"
+                  xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                   mc:Ignorable="d"
                   Title="JSON / XML Visualizer"
                   Height="450"
@@ -21,11 +22,13 @@
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
       <Button Content="Select File"
               Command="{Binding [SelectFile]}"
-              Width="100" 
-              Grid.Column="0"/>
+              Width="100"
+              Grid.Column="0" />
 
       <Button Content="Remove File"
               Command="{Binding [RemoveFile]}"
@@ -33,10 +36,21 @@
               Margin="10 0 0 0"
               Grid.Column="1" />
 
+      <CheckBox IsChecked="{Binding EditMode, Mode=TwoWay}"
+                IsEnabled="{Binding HasFile}"
+                Margin="10 0 0 0"
+                Grid.Column="2"
+                Content="Edit Mode" />
+
       <TextBlock Text="{Binding SelectedFileText}"
-                 Grid.Column="2"
+                 Grid.Column="3"
                  Margin="10 0 0 0"
-                 VerticalAlignment="Center"/>
+                 VerticalAlignment="Center" />
+
+      <Button Content="Save File"
+              Grid.Column="4"
+              Margin="10 0 0 0"
+              Command="{Binding [SaveFile]}" />
 
     </Grid>
 
@@ -44,9 +58,10 @@
     <Grid Grid.Row="1">
 
       <TreeView x:Name="treeView"
-                ItemsSource="{Binding DeserializesJSONItems, Mode=TwoWay}"
+                ItemsSource="{Binding TreeNodes, Mode=TwoWay}"
                 VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Standard">
+                VirtualizingStackPanel.VirtualizationMode="Standard"
+                SelectedItemChanged="__SelectedNodeChanged">
         <TreeView.ItemsPanel>
           <ItemsPanelTemplate>
             <VirtualizingStackPanel />
@@ -54,7 +69,27 @@
         </TreeView.ItemsPanel>
         <TreeView.ItemTemplate>
           <HierarchicalDataTemplate ItemsSource="{Binding Children, Mode=TwoWay}">
-            <TextBlock Text="{Binding NameValueString}" />
+
+            <StackPanel Orientation="Horizontal">
+              <Button DataContext="{Binding DataContext, ElementName=treeView}"
+                      Margin="2"
+                      Visibility="{Binding EditModeVisibility}"
+                      Command="{Binding [EditNode]}">
+                <Button.Content>
+                  <iconPacks:PackIconMaterial Kind="Pencil"
+                                              Width="10"
+                                              Height="10" />
+                </Button.Content>
+              </Button>
+              <TextBlock Text="{Binding NameValueString}"
+                         Margin="5 0 0 0"
+                         VerticalAlignment="Center" />
+            </StackPanel>
+
+            <!--<HierarchicalDataTemplate.Triggers>
+              
+            </HierarchicalDataTemplate.Triggers>-->
+
           </HierarchicalDataTemplate>
         </TreeView.ItemTemplate>
       </TreeView>
